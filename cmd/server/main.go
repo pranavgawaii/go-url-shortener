@@ -7,6 +7,7 @@ import (
 	"go-url-shortener/internal/config"
 	"go-url-shortener/internal/handler"
 	"go-url-shortener/internal/repository"
+	"go-url-shortener/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,16 +24,24 @@ func main() {
 	defer db.Close()
 
 	// Initialize Repositories
-	// urlRepo := repository.NewURLRepository(db) // Will be used in service layer later
+	urlRepo := repository.NewURLRepository(db)
+
+	// Initialize Services
+	urlService := service.NewURLService(urlRepo)
 
 	// Initialize Gin engine
 	r := gin.Default()
 
-	// Initialize handlers
+	// Initialize Handlers
 	healthHandler := handler.NewHealthHandler()
+	urlHandler := handler.NewURLHandler(urlService)
 
 	// Register routes
 	r.GET("/health", healthHandler.GetHealth)
+	api := r.Group("/api")
+	{
+		api.POST("/shorten", urlHandler.ShortenURL)
+	}
 
 	// Start server
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)

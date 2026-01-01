@@ -6,6 +6,7 @@ import (
 
 	"go-url-shortener/internal/config"
 	"go-url-shortener/internal/handler"
+	"go-url-shortener/internal/repository"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +14,16 @@ import (
 func main() {
 	// Initialize configuration
 	cfg := config.LoadConfig()
+
+	// Initialize Database
+	db, err := repository.NewDB(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer db.Close()
+
+	// Initialize Repositories
+	// urlRepo := repository.NewURLRepository(db) // Will be used in service layer later
 
 	// Initialize Gin engine
 	r := gin.Default()

@@ -6,13 +6,15 @@ import (
 
 // Config holds the application configuration
 type Config struct {
-	Port string
+	Port        string
+	DatabaseURL string
 }
 
 // LoadConfig loads configuration from environment variables
 func LoadConfig() *Config {
 	return &Config{
-		Port: getEnv("PORT", "8080"),
+		Port:        getEnv("PORT", "8080"),
+		DatabaseURL: getEnv("DATABASE_URL", ""),
 	}
 }
 

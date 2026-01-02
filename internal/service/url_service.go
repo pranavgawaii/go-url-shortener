@@ -17,6 +17,12 @@ const (
 	codeLength  = 6
 )
 
+var (
+	ErrOriginalURLRequired = errors.New("original URL is required")
+	ErrInvalidURLFormat    = errors.New("invalid URL format")
+	ErrShortCodeNotFound   = errors.New("short code not found")
+)
+
 // URLService defines the interface for URL business logic
 type URLService interface {
 	Shorten(originalURL string) (string, error)
@@ -36,7 +42,7 @@ func NewURLService(repo repository.URLRepository) URLService {
 func (s *urlService) Shorten(originalURL string) (string, error) {
 	// 1. Basic Validation
 	if originalURL == "" {
-		return "", errors.New("original URL is required")
+		return "", ErrOriginalURLRequired
 	}
 	// Ensure scheme exists
 	if !strings.HasPrefix(originalURL, "http://") && !strings.HasPrefix(originalURL, "https://") {
@@ -44,7 +50,7 @@ func (s *urlService) Shorten(originalURL string) (string, error) {
 	}
 	// Parse URL to check validity
 	if _, err := url.ParseRequestURI(originalURL); err != nil {
-		return "", errors.New("invalid URL format")
+		return "", ErrInvalidURLFormat
 	}
 
 	// 2. Generate and Save with Retry
@@ -88,7 +94,7 @@ func (s *urlService) Resolve(shortCode string) (string, error) {
 		return "", err
 	}
 	if url == nil {
-		return "", errors.New("short code not found")
+		return "", ErrShortCodeNotFound
 	}
 
 	// Increment click count asynchronously (fire and forget, or handle error if critical)

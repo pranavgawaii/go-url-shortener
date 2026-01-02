@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"go-url-shortener/internal/service"
@@ -33,8 +34,7 @@ func (h *URLHandler) ShortenURL(c *gin.Context) {
 
 	shortCode, err := h.service.Shorten(req.URL)
 	if err != nil {
-		// Distinguish errors here if needed (e.g. invalid URL vs internal server error)
-		if err.Error() == "invalid URL format" {
+		if errors.Is(err, service.ErrOriginalURLRequired) || errors.Is(err, service.ErrInvalidURLFormat) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -61,7 +61,7 @@ func (h *URLHandler) RedirectURL(c *gin.Context) {
 
 	originalURL, err := h.service.Resolve(shortCode)
 	if err != nil {
-		if err.Error() == "short code not found" {
+		if errors.Is(err, service.ErrShortCodeNotFound) {
 			c.Status(http.StatusNotFound)
 			return
 		}

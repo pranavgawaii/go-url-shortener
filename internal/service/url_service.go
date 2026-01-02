@@ -20,6 +20,7 @@ const (
 // URLService defines the interface for URL business logic
 type URLService interface {
 	Shorten(originalURL string) (string, error)
+	Resolve(shortCode string) (string, error)
 }
 
 type urlService struct {
@@ -78,6 +79,26 @@ func (s *urlService) Shorten(originalURL string) (string, error) {
 	}
 
 	return "", errors.New("failed to generate unique short code after retries")
+}
+
+// Resolve retrieves the original URL and increments click count
+func (s *urlService) Resolve(shortCode string) (string, error) {
+	url, err := s.repo.GetByShortCode(shortCode)
+	if err != nil {
+		return "", err
+	}
+	if url == nil {
+		return "", errors.New("short code not found")
+	}
+
+	// Increment click count asynchronously (fire and forget, or handle error if critical)
+	// For now, we'll do it synchronously for simplicity
+	if err := s.repo.IncrementClickCount(shortCode); err != nil {
+		// Log error but don't fail the redirect?
+		// log.Printf("Failed to increment click count: %v", err)
+	}
+
+	return url.OriginalURL, nil
 }
 
 // generateShortCode generates a random base62 string

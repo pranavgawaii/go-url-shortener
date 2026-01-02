@@ -11,6 +11,7 @@ import (
 type URLRepository interface {
 	Create(url *model.URL) error
 	GetByShortCode(shortCode string) (*model.URL, error)
+	IncrementClickCount(shortCode string) error
 }
 
 // postgresURLRepository implements URLRepository for PostgreSQL
@@ -60,4 +61,18 @@ func (r *postgresURLRepository) GetByShortCode(shortCode string) (*model.URL, er
 		return nil, fmt.Errorf("failed to get url: %w", err)
 	}
 	return url, nil
+}
+
+// IncrementClickCount increments the click count for a given short code
+func (r *postgresURLRepository) IncrementClickCount(shortCode string) error {
+	query := `
+		UPDATE urls
+		SET click_count = click_count + 1
+		WHERE short_code = $1
+	`
+	_, err := r.db.Exec(query, shortCode)
+	if err != nil {
+		return fmt.Errorf("failed to increment click count: %w", err)
+	}
+	return nil
 }

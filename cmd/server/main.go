@@ -42,6 +42,7 @@ func main() {
 	{
 		api.POST("/shorten", urlHandler.ShortenURL)
 	}
+	r.GET("/:shortCode", urlHandler.RedirectURL)
 
 	// Start server
 	serverAddr := fmt.Sprintf(":%s", cfg.Port)

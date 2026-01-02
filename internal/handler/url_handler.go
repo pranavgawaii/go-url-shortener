@@ -50,3 +50,24 @@ func (h *URLHandler) ShortenURL(c *gin.Context) {
 		"short_url": shortURL,
 	})
 }
+
+// RedirectURL handles the redirection to original URL
+func (h *URLHandler) RedirectURL(c *gin.Context) {
+	shortCode := c.Param("shortCode")
+	if shortCode == "" {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	originalURL, err := h.service.Resolve(shortCode)
+	if err != nil {
+		if err.Error() == "short code not found" {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Redirect(http.StatusFound, originalURL)
+}

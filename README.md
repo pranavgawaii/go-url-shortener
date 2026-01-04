@@ -140,14 +140,6 @@ Redirects the user to the original URL (HTTP 302) and tracks the click.
 { "status": "ok" }
 ```
 
-## 🗺️ Roadmap
-- [x] Core Shortening Engine
-- [x] PostgreSQL Persistence
-- [x] Click Analytics
-- [ ] Redis Caching Layer
-- [ ] Docker & Docker Compose Support
-- [ ] User Authentication & API Keys
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

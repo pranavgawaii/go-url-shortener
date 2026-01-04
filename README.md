@@ -1,45 +1,74 @@
-# Go URL Shortener Service
+<div align="center">
+
+# Go URL Shortener
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13+-336791?style=flat&logo=postgresql)](https://www.postgresql.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/pranavgawaii/go-url-shortener/graphs/commit-activity)
 
-A high-performance, production-ready URL Shortener backend engineered with **Go** and **Gin**. This project demonstrates industry best practices for building scalable microservices, featuring a **Clean Layered Architecture** (Handler → Service → Repository) to ensure maintainability, testability, and clear separation of concerns.
+**A production-grade, high-performance URL shortening microservice built with Go.**
 
-Designed to handle high-throughput link generation and resolution, it utilizes **Base62 encoding** for efficient short codes and **PostgreSQL** for reliable persistent storage.
+[Key Features](#-key-features) • [Architecture](#-architecture) • [Getting Started](#-getting-started) • [API Reference](#-api-documentation)
+
+</div>
+
+---
+
+## 📖 Project Overview
+
+The **Go URL Shortener** is designed to demonstrate industry-standard practices for building scalable backend systems. Unlike simple tutorials, this project prioritizes **maintainability, testability, and performance** from day one.
+
+It implements a **Clean Layered Architecture**, ensuring that business logic is decoupled from transport layers (HTTP) and data persistence (SQL). This separation allows for easier unit testing, refactoring, and potentially swapping out components (e.g., changing databases or web frameworks) with minimal friction.
+
+### Why Go?
+Go was chosen for its exceptional performance, low memory footprint, and high concurrency capabilities (goroutines), making it the ideal choice for a high-traffic service like a URL shortener that needs to handle thousands of redirects with sub-millisecond latency.
+
+## 🏛️ Architecture
+
+The application follows a strict unidirectional data flow:
+
+```mermaid
+graph LR
+    A[HTTP Handler] -->|DTOs| B[Service Layer]
+    B -->|Domain Models| C[Repository Layer]
+    C -->|SQL| D[(PostgreSQL)]
+```
+
+*   **Handler Layer**: Manages HTTP requests/responses, payload validation, and status codes.
+*   **Service Layer**: Contains pure business logic (e.g., Base62 encoding, collision handling, rules).
+*   **Repository Layer**: Handles all direct data access, abstracting the underlying database technology.
 
 ## 🚀 Key Features
 
-- **⚡️ High Performance**: Built on the Gin framework for minimal latency.
-- **🏗 Clean Architecture**: Strickland separation of concerns (Handler, Service, Repository, Model).
-- **🐘 Persistent Storage**: Robust data management using PostgreSQL.
-- **🔢 Base62 Shortening**: Efficient, collision-resistant short code generation.
-- **📊 Analytics Tracking**: Automatic click tracking for every redirected URL.
-- **🛡 Error Handling**: Domain-level error handling mapped to semantic HTTP status codes.
-- **💓 Health Monitoring**: Built-in endpoints for container orchestration health checks.
+- **⚡️ High Performance**: Powered by **Gin**, optimized for speed and low allocation.
+- **🔢 Efficient Shortening**: Uses **Base62 encoding** (a-zA-Z0-9) to generate short, URL-safe codes.
+- **🐘 Robust Storage**: Data is persisted in **PostgreSQL** with proper indexing for fast lookups.
+- **📊 Analytics Ready**: Built-in click tracking increments counters atomically on every redirect.
+- **🛡 Enterprise Error Handling**: Semantic domain errors mapped to appropriate HTTP status codes (400 vs 404 vs 500).
+- **💓 Production Ready**: Includes health check endpoints (`/health`) for container orchestration (Kubernetes/ECS).
 
-## 🛠️ Technology Stack
+## 🛠️ Tech Stack
 
 - **Language**: [Go (Golang)](https://golang.org/) 1.21+
 - **Web Framework**: [Gin](https://gin-gonic.com/)
 - **Database**: [PostgreSQL](https://www.postgresql.org/)
-- **Driver**: [lib/pq](https://github.com/lib/pq)
-- **Configuration**: Environment-based (12-Factor App compliant)
+- **Configuration**: 12-Factor App (Environment Variables)
 
 ## 📂 Project Structure
 
 ```bash
 .
 ├── cmd
-│   └── server          # Application entry point (main.go)
+│   └── server          # Entry point (main.go)
 ├── internal
-│   ├── config          # Configuration loading (env vars)
-│   ├── handler         # HTTP Transport layer (REST Controllers)
-│   ├── service         # Business Logic layer (Validation, Algorithm)
-│   ├── repository      # Data Access layer (SQL queries)
-│   └── model           # Core domain entities
-├── migrations          # SQL Database migration scripts
-└── go.mod              # Module dependencies
+│   ├── config          # Configuration loader
+│   ├── handler         # HTTP Controllers
+│   ├── service         # Business Logic
+│   ├── repository      # Data Access Objects (DAO)
+│   └── model           # Domain Entities
+├── migrations          # Database Schemas
+└── go.mod              # Dependency Manager
 ```
 
 ## 🏁 Getting Started
@@ -47,7 +76,7 @@ Designed to handle high-throughput link generation and resolution, it utilizes *
 ### Prerequisites
 
 - **Go**: v1.21 or higher
-- **PostgreSQL**: Running instance (local or remote)
+- **PostgreSQL**: Running instance
 - **Git**
 
 ### Installation
@@ -64,78 +93,64 @@ Designed to handle high-throughput link generation and resolution, it utilizes *
     ```
 
 3.  **Setup Configuration**
-    Set the required environment variables:
     ```bash
     export PORT=8080
     export DATABASE_URL="postgres://user:password@localhost:5432/shortener?sslmode=disable"
     ```
 
 4.  **Database Migration**
-    Run the SQL script in `migrations/001_create_urls_table.sql` on your PostgreSQL database to create the required schema.
+    Execute the SQL in `migrations/001_create_urls_table.sql` on your database.
 
 5.  **Run the application**
     ```bash
     go run cmd/server/main.go
     ```
-    The server will start on port `8080`.
 
 ## 🔌 API Documentation
 
 ### 1. Shorten URL
-Generates a unique 6-character short code for a given URL.
+`POST /api/shorten`
 
-- **Endpoint**: `POST /api/shorten`
-- **Content-Type**: `application/json`
+Creates a new short link for the provided URL.
 
-**Request Body**
+**Request:**
 ```json
 {
-  "url": "https://www.google.com/search?q=golang"
+  "url": "https://www.example.com/very/long/url"
 }
 ```
 
-**Success Response (201 Created)**
+**Response (201 Created):**
 ```json
 {
-  "short_url": "http://localhost:8080/aX9d21"
+  "short_url": "http://localhost:8080/Ax79bZ"
 }
 ```
 
-**Error Response (400 Bad Request)**
-```json
-{
-  "error": "original URL is required"
-}
-```
+### 2. Redirect
+`GET /:shortCode`
 
----
-
-### 2. Redirect to Original URL
-Redirects the client to the original URL and increments the click count.
-
-- **Endpoint**: `GET /:shortCode`
-- **Example**: `GET /aX9d21`
-
-**Behavior**
-- **Success**: redirects to original URL (HTTP 302 Found).
-- **Not Found**: returns HTTP 404 (if code does not exist).
-
----
+Redirects the user to the original URL (HTTP 302) and tracks the click.
 
 ### 3. Health Check
-Liveness probe for load balancers.
+`GET /health`
 
-- **Endpoint**: `GET /health`
-- **Response**: `200 OK`
+**Response (200 OK):**
 ```json
-{
-  "status": "ok"
-}
+{ "status": "ok" }
 ```
+
+## 🗺️ Roadmap
+- [x] Core Shortening Engine
+- [x] PostgreSQL Persistence
+- [x] Click Analytics
+- [ ] Redis Caching Layer
+- [ ] Docker & Docker Compose Support
+- [ ] User Authentication & API Keys
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request or open an issue for discussion.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
